@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CineVault — Your Movie Watchlist</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="./index.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 </head>
@@ -19,7 +19,46 @@
   </nav>
 
   <div class="layout">
-    
+
+    <main class="main-panel">
+      <div class="search-section">
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Search for a movie... e.g. Inception, Dune, The Batman"
+            autocomplete="on"
+          />
+          <button id="clearBtn" class="clear-btn" title="Clear search">✕</button>
+        </div>
+        <p class="search-hint">Results update as you type</p>
+      </div>
+
+      <div id="loader" class="loader hidden">
+        <div class="spinner"></div>
+        <p>Fetching movies...</p>
+      </div>
+
+      <div id="errorMsg" class="error-msg hidden"></div>
+
+      <div id="resultsGrid" class="movies-grid"></div>
+
+      <div id="emptySearch" class="empty-state">
+        <div class="empty-icon">🎥</div>
+        <h2>What are we watching tonight?</h2>
+        <p>Start typing a movie name above to discover titles and add them to your watchlist.</p>
+      </div>
+
+      <div id="noResults" class="empty-state hidden">
+        <div class="empty-icon">🕵️</div>
+        <h2>No movies found</h2>
+        <p>Try a different title or check your spelling. Even Spielberg makes typos.</p>
+      </div>
+
+    </main>
+
   </div>
 </body>
 </html>
