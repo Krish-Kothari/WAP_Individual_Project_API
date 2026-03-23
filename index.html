@@ -59,6 +59,42 @@
 
     </main>
 
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">My Watchlist</h2>
+        <span id="watchlistCount" class="count-badge">0</span>
+      </div>
+
+
+      <div id="watchlistEmpty" class="watchlist-empty">
+        <div class="empty-icon small">📋</div>
+        <p>Your list is empty.<br/>Add movies from the search results!</p>
+      </div>
+
+      <div id="watchlistItems" class="watchlist-items"></div>
+
+      <div id="randomSection" class="random-section hidden">
+        <button id="randomBtn" class="random-btn">
+          <span>🎲</span> Random Movie Night
+        </button>
+        <p class="random-hint">Can't decide? Let fate pick for you.</p>
+      </div>
+      <button id="clearAllBtn" class="clear-all-btn hidden">Clear All</button>
+    </aside>
+
   </div>
+  <div id="randomModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button class="modal-close" id="closeModal">✕</button>
+      <p class="modal-label">🎲 Tonight you're watching...</p>
+      <img id="modalPoster" class="modal-poster" src="" alt="Movie Poster" />
+      <h2 id="modalTitle" class="modal-title"></h2>
+      <p id="modalYear" class="modal-year"></p>
+      <p id="modalRating" class="modal-rating"></p>
+      <p id="modalPlot" class="modal-plot"></p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
