@@ -1,100 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineVault — Your Movie Watchlist</title>
-    <link rel="stylesheet" href="./index.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineVault — Movie Watchlist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="index.css" />
 </head>
 <body>
 
-    <nav class="navbar">
-    <div class="nav-brand">
-      <span class="brand-icon">🎬</span>
-      <span class="brand-name">CineVault</span>
+  
+  <nav class="navbar">
+    <div class="nav-inner">
+
+      <a class="nav-logo" href="#">
+        <span class="logo-box">CV</span>
+        <span class="logo-full">CineVault</span>
+      </a>
+
+      <div class="nav-search-wrap">
+        <div class="nav-search-box">
+          <svg class="search-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            id="searchInput"
+            class="nav-search-input"
+            type="text"
+            placeholder="Search movies, directors, actors..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="nav-clear-btn hidden" id="clearBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <button class="nav-wl-btn" id="wlNavBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Watchlist
+          <span class="nav-wl-count" id="navWlCount">0</span>
+        </button>
+      </div>
+
     </div>
-    <p class="nav-tagline">Search. Save. Stream.</p>
   </nav>
 
-  <div class="layout">
+  
+  <section class="hero">
+    <div class="hero-filmstrip"></div>
+    <div class="hero-inner">
+      <p class="hero-eyebrow">Your personal movie database</p>
+      <h1 class="hero-heading">Discover. Save. <em>Watch.</em></h1>
+      <p class="hero-sub">Search any movie, check ratings, build your watchlist.</p>
+    </div>
+  </section>
 
-    <main class="main-panel">
-      <div class="search-section">
-        <div class="search-wrapper">
-          <span class="search-icon">🔍</span>
-          <input
-            type="text"
-            id="searchInput"
-            class="search-input"
-            placeholder="Search for a movie... e.g. Inception, Dune, The Batman"
-            autocomplete="on"
-          />
-          <button id="clearBtn" class="clear-btn" title="Clear search">✕</button>
+  
+  <div class="page-body">
+
+    
+    <main class="results-col">
+
+      
+      <div class="results-bar hidden" id="resultsBar">
+        <span class="results-count" id="resultsCount"></span>
+        <div class="sort-group">
+          <label class="sort-label" for="sortSelect">Sort by</label>
+          <select class="sort-select" id="sortSelect">
+            <option value="default">Relevance</option>
+            <option value="year-desc">Year ↓ Newest</option>
+            <option value="year-asc">Year ↑ Oldest</option>
+            <option value="az">Title A – Z</option>
+            <option value="za">Title Z – A</option>
+          </select>
         </div>
-        <p class="search-hint">Results update as you type</p>
       </div>
 
-      <div id="loader" class="loader hidden">
-        <div class="spinner"></div>
-        <p>Fetching movies...</p>
+      
+      <div class="loader hidden" id="loader">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <p>Searching...</p>
       </div>
 
-      <div id="errorMsg" class="error-msg hidden"></div>
-
-      <div id="resultsGrid" class="movies-grid"></div>
-
-      <div id="emptySearch" class="empty-state">
-        <div class="empty-icon">🎥</div>
-        <h2>What are we watching tonight?</h2>
-        <p>Start typing a movie name above to discover titles and add them to your watchlist.</p>
+      
+      <div class="error-box hidden" id="errorBox">
+        ⚠ <span id="errorText"></span>
       </div>
 
-      <div id="noResults" class="empty-state hidden">
-        <div class="empty-icon">🕵️</div>
-        <h2>No movies found</h2>
-        <p>Try a different title or check your spelling. Even Spielberg makes typos.</p>
+      
+      <div class="landing-wrap" id="landingWrap">
+        <div class="ghost-grid">
+          <div class="ghost-card"></div><div class="ghost-card"></div>
+          <div class="ghost-card"></div><div class="ghost-card"></div>
+          <div class="ghost-card"></div><div class="ghost-card"></div>
+        </div>
+        <div class="landing-cta">
+          <span class="landing-icon">🎬</span>
+          <h2>Start with a search</h2>
+          <p>Type any movie title in the bar above.</p>
+        </div>
       </div>
+
+      
+      <div class="no-results hidden" id="noResults">
+        <span class="landing-icon">🔍</span>
+        <h2>No results found</h2>
+        <p>Try checking the spelling or use a shorter title.</p>
+      </div>
+
+      
+      <div class="movies-grid" id="moviesGrid"></div>
 
     </main>
 
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2 class="sidebar-title">My Watchlist</h2>
-        <span id="watchlistCount" class="count-badge">0</span>
+    
+    <aside class="wl-sidebar" id="wlSidebar">
+      <div class="wl-head">
+        <h2 class="wl-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Your Watchlist
+        </h2>
+        <span class="wl-count" id="wlCount">0</span>
       </div>
 
-
-      <div id="watchlistEmpty" class="watchlist-empty">
-        <div class="empty-icon small">📋</div>
-        <p>Your list is empty.<br/>Add movies from the search results!</p>
+      <div class="wl-empty-state" id="wlEmptyState">
+        <p>Nothing saved yet.</p>
+        <p class="wl-hint">Click the <strong>bookmark icon</strong> on any movie card.</p>
       </div>
 
-      <div id="watchlistItems" class="watchlist-items"></div>
+      <ul class="wl-list" id="wlList"></ul>
 
-      <div id="randomSection" class="random-section hidden">
-        <button id="randomBtn" class="random-btn">
-          <span>🎲</span> Random Movie Night
-        </button>
-        <p class="random-hint">Can't decide? Let fate pick for you.</p>
+      <div class="wl-actions hidden" id="wlActions">
+        <button class="btn-random" id="randomBtn">🎲 Random Pick</button>
+        <button class="btn-remove-all" id="clearAllBtn">Remove All</button>
       </div>
-      <button id="clearAllBtn" class="clear-all-btn hidden">Clear All</button>
     </aside>
 
   </div>
-  <div id="randomModal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <button class="modal-close" id="closeModal">✕</button>
-      <p class="modal-label">🎲 Tonight you're watching...</p>
-      <img id="modalPoster" class="modal-poster" src="" alt="Movie Poster" />
-      <h2 id="modalTitle" class="modal-title"></h2>
-      <p id="modalYear" class="modal-year"></p>
-      <p id="modalRating" class="modal-rating"></p>
-      <p id="modalPlot" class="modal-plot"></p>
+
+
+  
+  <div class="overlay hidden" id="detailOverlay">
+    <div class="detail-modal">
+      <button class="close-btn" id="detailCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      
+      <div class="detail-skeleton" id="detailSkeleton">
+        <div class="sk-poster"></div>
+        <div class="sk-body">
+          <div class="sk-bar" style="width:55%"></div>
+          <div class="sk-bar" style="width:35%"></div>
+          <div class="sk-bar" style="width:80%"></div>
+          <div class="sk-bar" style="width:70%"></div>
+          <div class="sk-bar" style="width:90%"></div>
+          <div class="sk-bar" style="width:60%"></div>
+        </div>
+      </div>
+
+      
+      <div class="detail-body hidden" id="detailBody">
+        <img class="detail-poster" id="dPoster" src="" alt="" />
+        <div class="detail-info">
+          <span class="detail-label">FILM</span>
+          <h1 class="detail-title" id="dTitle"></h1>
+          <div class="detail-chips" id="dChips"></div>
+
+          
+          <div class="detail-score-row" id="dScoreRow"></div>
+
+          <div class="detail-genres" id="dGenres"></div>
+          <p class="detail-plot" id="dPlot"></p>
+          <div class="detail-crew-grid" id="dCrew"></div>
+
+          <button class="btn-add-wl" id="detailWlBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            Add to Watchlist
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  
+  <div class="overlay hidden" id="randomOverlay">
+    <div class="random-modal">
+      <button class="close-btn" id="randomCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <p class="random-label">🎲 Tonight you're watching...</p>
+      <img class="random-poster" id="rPoster" src="" alt="" />
+      <h2 class="random-title" id="rTitle"></h2>
+      <p class="random-year"  id="rYear"></p>
+      <button class="btn-random-again" id="randomAgainBtn">Pick Again</button>
+    </div>
+  </div>
+
+  
+  <div class="mob-backdrop hidden" id="mobBackdrop"></div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p class="footer-brand">CineVault</p>
+      <p class="footer-text">Find movies. Build your watchlist. Pick your next night.</p>
+      <p class="footer-copy">© 2026 CineVault • Created by Krish Kothari with ❤️</p>
+    </div>
+  </footer>
+
+  <script src="index.js"></script>
 </body>
 </html>
