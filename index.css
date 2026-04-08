@@ -252,6 +252,94 @@ select {
   min-width: 0;
 }
 
+.popular-section,
+.search-section {
+  display: block;
+}
+
+.other-section {
+  margin-top: 24px;
+}
+
+.search-section {
+  margin-top: 24px;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #f5c518;
+}
+
+.section-sub {
+  font-size: 13px;
+  color: #999;
+}
+
+.popular-section .section-head,
+.other-section .section-head {
+  border: 1px solid #2f2f2f;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.popular-section .section-head {
+  background: linear-gradient(135deg, rgba(69,194,255,0.16), rgba(69,194,255,0.03));
+}
+
+.other-section .section-head {
+  background: linear-gradient(135deg, rgba(245,197,24,0.14), rgba(245,197,24,0.03));
+}
+
+.popular-section .section-title {
+  color: #7ecfff;
+}
+
+.other-section .section-title {
+  color: #f5c518;
+}
+
+.popular-section .movie-card {
+  border-color: #234252;
+  box-shadow: 0 0 0 1px rgba(126,207,255,0.12) inset;
+}
+
+.other-section .movie-card {
+  border-color: #4e4122;
+  box-shadow: 0 0 0 1px rgba(245,197,24,0.08) inset;
+}
+
+.popular-section .btn-card-save {
+  background: #56b9ec;
+  border-color: #56b9ec;
+  color: #071018;
+}
+
+.popular-section .btn-card-save:hover {
+  background: #3ca9de;
+}
+
+.popular-section .movie-card.saved .btn-card-save {
+  color: #7ecfff;
+  border-color: #56b9ec;
+}
+
+.popular-section .card-bookmark-btn:hover,
+.popular-section .movie-card.saved .card-bookmark-btn {
+  color: #56b9ec;
+}
+
 
 .results-bar {
   display: flex;
@@ -433,7 +521,11 @@ select {
   background: #111;
   overflow: hidden;
 }
-
+.movie-card, .card-poster{
+  width: 100%;
+  height: 100%;
+  border-radius: 25px 25px 25px 25px;
+}
 .card-poster {
   width: 100%;
   height: 100%;
@@ -1121,6 +1213,7 @@ body[data-theme="light"] .hero {
 }
 
 body[data-theme="light"] .hero-sub,
+body[data-theme="light"] .section-sub,
 body[data-theme="light"] .results-count,
 body[data-theme="light"] .sort-label,
 body[data-theme="light"] .landing-cta p,
@@ -1138,6 +1231,7 @@ body[data-theme="light"] .results-bar {
 }
 
 body[data-theme="light"] .results-count strong,
+body[data-theme="light"] .section-title,
 body[data-theme="light"] .landing-cta h2,
 body[data-theme="light"] .card-title,
 body[data-theme="light"] .wl-title,
@@ -1175,6 +1269,57 @@ body[data-theme="light"] .ghost-card {
 body[data-theme="light"] .movie-card {
   background: #fbf8f2;
   border-color: #d4c8b4;
+}
+
+body[data-theme="light"] .popular-section .section-head,
+body[data-theme="light"] .other-section .section-head {
+  border-color: #d7c7ae;
+}
+
+body[data-theme="light"] .popular-section .section-head {
+  background: linear-gradient(140deg, rgba(64,146,191,0.22), rgba(64,146,191,0.06));
+}
+
+body[data-theme="light"] .other-section .section-head {
+  background: linear-gradient(140deg, rgba(188,147,47,0.2), rgba(188,147,47,0.06));
+}
+
+body[data-theme="light"] .popular-section .section-title {
+  color: #2f6d95;
+}
+
+body[data-theme="light"] .other-section .section-title {
+  color: #8c6a17;
+}
+
+body[data-theme="light"] .popular-section .movie-card {
+  border-color: #7fb3d1;
+  box-shadow: 0 0 0 1px rgba(64,146,191,0.18) inset;
+}
+
+body[data-theme="light"] .other-section .movie-card {
+  border-color: #c8ab72;
+  box-shadow: 0 0 0 1px rgba(188,147,47,0.1) inset;
+}
+
+body[data-theme="light"] .popular-section .btn-card-save {
+  background: #5faed9;
+  border-color: #5faed9;
+  color: #06131d;
+}
+
+body[data-theme="light"] .popular-section .btn-card-save:hover {
+  background: #499ecb;
+}
+
+body[data-theme="light"] .popular-section .movie-card.saved .btn-card-save {
+  color: #2f6d95;
+  border-color: #4a97c2;
+}
+
+body[data-theme="light"] .popular-section .card-bookmark-btn:hover,
+body[data-theme="light"] .popular-section .movie-card.saved .card-bookmark-btn {
+  color: #2f6d95;
 }
 
 body[data-theme="light"] .movie-card:hover {

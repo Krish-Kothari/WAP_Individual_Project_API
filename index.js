@@ -1,13 +1,15 @@
 const API_KEY  = "373c7a1f";
 const API_BASE = "https://www.omdbapi.com/";
 const POPULAR_IMDB_IDS = ["tt0111161", "tt0068646", "tt0468569", "tt0133093", "tt0109830", "tt1375666", "tt0816692", "tt0120737","tt0120697","tt0102926"];
+const OTHER_IMDB_IDS = ["tt0071562", "tt0050083", "tt0108052", "tt0167260", "tt0110912", "tt0120815", "tt0172495", "tt6751668", "tt0080684", "tt7286456"];
 
 let watchlist     = [];
 let lastResults   = [];
-let debounceTimer = null;
 let sidebarOpen   = false;
 let popularMovies = [];
+let otherMovies   = [];
 let popularLoading = false;
+let otherLoading = false;
 
 const searchInput   = document.getElementById("searchInput");
 const clearBtn      = document.getElementById("clearBtn");
@@ -15,7 +17,11 @@ const loader        = document.getElementById("loader");
 const errorBox      = document.getElementById("errorBox");
 const errorText     = document.getElementById("errorText");
 const moviesGrid    = document.getElementById("moviesGrid");
-const landingWrap   = document.getElementById("landingWrap");
+const popularGrid   = document.getElementById("popularGrid");
+const popularSection= document.getElementById("popularSection");
+const otherGrid     = document.getElementById("otherGrid");
+const otherSection  = document.getElementById("otherSection");
+const searchSection = document.getElementById("searchSection");
 const noResults     = document.getElementById("noResults");
 const resultsBar    = document.getElementById("resultsBar");
 const resultsCount  = document.getElementById("resultsCount");
@@ -62,8 +68,24 @@ window.addEventListener("DOMContentLoaded", () => {
   loadWatchlist();
   renderWatchlist();
   clearBtn.classList.add("hidden");
-  loadPopularMovies();
+  loadHomeSections();
 });
+
+function loadHomeSections() {
+  showHomeSections();
+  loadPopularMovies();
+  loadOtherMovies();
+}
+
+function showHomeSections() {
+  show(popularSection);
+  show(otherSection);
+}
+
+function hideHomeSections() {
+  hide(popularSection);
+  hide(otherSection);
+}
 
 function applyInitialTheme() {
   const savedTheme = localStorage.getItem("cinevault_theme");
@@ -110,15 +132,12 @@ searchInput.addEventListener("input", () => {
     clearBtn.classList.add("hidden");
   }
 
-  if (q.length < 2) {
+  if (q.length === 0) {
     resetToLanding();
     return;
   }
 
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    searchMovies(q);
-  }, 480);
+  searchMovies(q);
 });
 
 clearBtn.addEventListener("click", () => {
@@ -130,10 +149,11 @@ clearBtn.addEventListener("click", () => {
 
 
 async function searchMovies(query) {
+  hideHomeSections();
+  show(searchSection);
   showLoader();
   hideError();
   moviesGrid.innerHTML = "";
-  hide(landingWrap);
   hide(noResults);
   hide(resultsBar);
 
@@ -170,12 +190,6 @@ async function loadPopularMovies() {
   if (popularLoading) return;
 
   popularLoading = true;
-  showLoader();
-  hideError();
-  hide(noResults);
-  hide(resultsBar);
-  hide(landingWrap);
-  moviesGrid.innerHTML = "";
 
   try {
     const requests = POPULAR_IMDB_IDS.map(async (imdbID) => {
@@ -193,20 +207,11 @@ async function loadPopularMovies() {
 
     popularMovies = (await Promise.all(requests)).filter(Boolean);
 
-    if (searchInput.value.trim().length >= 2) {
-      hideLoader();
-      return;
-    }
-
     if (popularMovies.length > 0) {
       renderPopularMovies();
-    } else {
-      hideLoader();
-      show(landingWrap);
     }
   } catch (err) {
-    hideLoader();
-    show(landingWrap);
+    popularMovies = [];
     console.error(err);
   } finally {
     popularLoading = false;
@@ -214,17 +219,61 @@ async function loadPopularMovies() {
 }
 
 
+async function loadOtherMovies() {
+  if (otherMovies.length > 0) {
+    renderOtherMovies();
+    return;
+  }
+  if (otherLoading) return;
+
+  otherLoading = true;
+
+  try {
+    const requests = OTHER_IMDB_IDS.map(async (imdbID) => {
+      const res = await fetch(`${API_BASE}?apikey=${API_KEY}&i=${imdbID}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.Response !== "True") return null;
+      return {
+        imdbID: data.imdbID,
+        Title: data.Title,
+        Year: data.Year,
+        Poster: data.Poster
+      };
+    });
+
+    otherMovies = (await Promise.all(requests)).filter(Boolean);
+
+    if (otherMovies.length > 0) {
+      renderOtherMovies();
+    }
+  } catch (err) {
+    otherMovies = [];
+    console.error(err);
+  } finally {
+    otherLoading = false;
+  }
+}
+
+
 function renderPopularMovies() {
-  if (searchInput.value.trim().length >= 2) return;
-  hideLoader();
-  hideError();
-  hide(noResults);
-  hide(landingWrap);
-  show(resultsBar);
-  sortSelect.value = "default";
-  lastResults = [...popularMovies];
-  resultsCount.innerHTML = `<strong>${popularMovies.length}</strong> popular movies`;
-  renderCards(popularMovies);
+  if (!popularGrid || !popularSection) return;
+  if (popularMovies.length === 0) {
+    hide(popularSection);
+    return;
+  }
+  show(popularSection);
+  renderCards(popularMovies, popularGrid);
+}
+
+function renderOtherMovies() {
+  if (!otherGrid || !otherSection) return;
+  if (otherMovies.length === 0) {
+    hide(otherSection);
+    return;
+  }
+  show(otherSection);
+  renderCards(otherMovies, otherGrid);
 }
 
 
@@ -270,8 +319,9 @@ sortSelect.addEventListener("change", () => {
 });
 
 
-function renderCards(movies) {
-  moviesGrid.innerHTML = "";
+function renderCards(movies, targetGrid = moviesGrid) {
+  if (!targetGrid) return;
+  targetGrid.innerHTML = "";
 
   movies.forEach((movie, i) => {
     const saved = isSaved(movie.imdbID);
@@ -318,7 +368,7 @@ function renderCards(movies) {
       toggleSave(movie, card);
     });
 
-    moviesGrid.appendChild(card);
+    targetGrid.appendChild(card);
   });
 }
 
@@ -326,31 +376,18 @@ function renderCards(movies) {
 function toggleSave(movie, cardEl) {
   if (isSaved(movie.imdbID)) {
     removeMovie(movie.imdbID);
-    if (cardEl) {
-      cardEl.classList.remove("saved");
-      const saveBtn = cardEl.querySelector(".btn-card-save");
-      const bmBtn   = cardEl.querySelector(".card-bookmark-btn svg");
-      if (saveBtn) saveBtn.textContent = "+ Watchlist";
-      if (bmBtn)   bmBtn.setAttribute("fill", "none");
-    }
   } else {
     addMovie(movie);
-    if (cardEl) {
-      cardEl.classList.add("saved");
-      const saveBtn = cardEl.querySelector(".btn-card-save");
-      const bmBtn   = cardEl.querySelector(".card-bookmark-btn svg");
-      if (saveBtn) saveBtn.textContent = "✓ Saved";
-      if (bmBtn)   bmBtn.setAttribute("fill", "currentColor");
 
-      wlCount.style.transform = "scale(1.5)";
-      navWlCount.style.transform = "scale(1.5)";
-      setTimeout(() => {
-        wlCount.style.transform = "";
-        navWlCount.style.transform = "";
-      }, 220);
-    }
+    wlCount.style.transform = "scale(1.5)";
+    navWlCount.style.transform = "scale(1.5)";
+    setTimeout(() => {
+      wlCount.style.transform = "";
+      navWlCount.style.transform = "";
+    }, 220);
   }
 
+  syncMovieCards(movie.imdbID);
   renderWatchlist();
   saveWatchlist();
 
@@ -369,6 +406,17 @@ function removeMovie(imdbID) {
 
 function isSaved(imdbID) {
   return watchlist.some(m => m.imdbID === imdbID);
+}
+
+function syncMovieCards(imdbID) {
+  const saved = isSaved(imdbID);
+  document.querySelectorAll(`.movie-card[data-id="${imdbID}"]`).forEach((card) => {
+    card.classList.toggle("saved", saved);
+    const btn = card.querySelector(".btn-card-save");
+    const svg = card.querySelector(".card-bookmark-btn svg");
+    if (btn) btn.textContent = saved ? "✓ Saved" : "+ Watchlist";
+    if (svg) svg.setAttribute("fill", saved ? "currentColor" : "none");
+  });
 }
 
 function renderWatchlist() {
@@ -407,15 +455,7 @@ function renderWatchlist() {
       removeMovie(movie.imdbID);
       renderWatchlist();
       saveWatchlist();
-
-      const card = moviesGrid.querySelector(`[data-id="${movie.imdbID}"]`);
-      if (card) {
-        card.classList.remove("saved");
-        const btn = card.querySelector(".btn-card-save");
-        const svg = card.querySelector(".card-bookmark-btn svg");
-        if (btn) btn.textContent = "+ Watchlist";
-        if (svg) svg.setAttribute("fill", "none");
-      }
+      syncMovieCards(movie.imdbID);
     });
 
     wlList.appendChild(li);
@@ -523,8 +563,7 @@ function populateDetail(data) {
       Year:   data.Year,
       Poster: data.Poster
     };
-    const card = moviesGrid.querySelector(`[data-id="${data.imdbID}"]`) || null;
-    toggleSave(movieObj, card);
+    toggleSave(movieObj);
   };
 
   hide(detailSkeleton);
@@ -628,6 +667,7 @@ function hideLoader() { hide(loader); }
 
 function showError(msg) {
   errorText.textContent = msg;
+  show(searchSection);
   show(errorBox);
 }
 
@@ -636,11 +676,12 @@ function hideError() { hide(errorBox); }
 function resetToLanding() {
   moviesGrid.innerHTML = "";
   lastResults = [];
+  hide(searchSection);
   hide(resultsBar);
   hide(noResults);
   hide(errorBox);
   hide(loader);
-  loadPopularMovies();
+  loadHomeSections();
   sortSelect.value = "default";
 }
 

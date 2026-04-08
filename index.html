@@ -74,56 +74,54 @@
 
     
     <main class="results-col">
-
-      
-      <div class="results-bar hidden" id="resultsBar">
-        <span class="results-count" id="resultsCount"></span>
-        <div class="sort-group">
-          <label class="sort-label" for="sortSelect">Sort by</label>
-          <select class="sort-select" id="sortSelect">
-            <option value="default">Relevance</option>
-            <option value="year-desc">Year ↓ Newest</option>
-            <option value="year-asc">Year ↑ Oldest</option>
-            <option value="az">Title A – Z</option>
-            <option value="za">Title Z – A</option>
-          </select>
+      <section class="popular-section" id="popularSection">
+        <div class="section-head">
+          <h2 class="section-title">Top 10 Popular Movies</h2>
+          <p class="section-sub">Browse popular picks or search for anything else.</p>
         </div>
-      </div>
+        <div class="movies-grid" id="popularGrid"></div>
+      </section>
 
-      
-      <div class="loader hidden" id="loader">
-        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        <p>Searching...</p>
-      </div>
-
-      
-      <div class="error-box hidden" id="errorBox">
-        ⚠ <span id="errorText"></span>
-      </div>
-
-      
-      <div class="landing-wrap" id="landingWrap">
-        <div class="ghost-grid">
-          <div class="ghost-card"></div><div class="ghost-card"></div>
-          <div class="ghost-card"></div><div class="ghost-card"></div>
-          <div class="ghost-card"></div><div class="ghost-card"></div>
+      <section class="other-section" id="otherSection">
+        <div class="section-head">
+          <h2 class="section-title">Other Movies</h2>
+          <p class="section-sub">More picks available on searching.</p>
         </div>
-        <div class="landing-cta">
-          <span class="landing-icon">🎬</span>
-          <h2>Start with a search</h2>
-          <p>Type any movie title in the bar above.</p>
+        <div class="movies-grid" id="otherGrid"></div>
+      </section>
+
+      <section class="search-section hidden" id="searchSection">
+        <div class="results-bar hidden" id="resultsBar">
+          <span class="results-count" id="resultsCount"></span>
+          <div class="sort-group">
+            <label class="sort-label" for="sortSelect">Sort by</label>
+            <select class="sort-select" id="sortSelect">
+              <option value="default">Relevance</option>
+              <option value="year-desc">Year ↓ Newest</option>
+              <option value="year-asc">Year ↑ Oldest</option>
+              <option value="az">Title A – Z</option>
+              <option value="za">Title Z – A</option>
+            </select>
+          </div>
         </div>
-      </div>
 
-      
-      <div class="no-results hidden" id="noResults">
-        <span class="landing-icon">🔍</span>
-        <h2>No results found</h2>
-        <p>Try checking the spelling or use a shorter title.</p>
-      </div>
+        <div class="loader hidden" id="loader">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <p>Searching...</p>
+        </div>
 
-      
-      <div class="movies-grid" id="moviesGrid"></div>
+        <div class="error-box hidden" id="errorBox">
+          ⚠ <span id="errorText"></span>
+        </div>
+
+        <div class="no-results hidden" id="noResults">
+          <span class="landing-icon">🔍</span>
+          <h2>No results found</h2>
+          <p>Try checking the spelling or use a shorter title.</p>
+        </div>
+
+        <div class="movies-grid" id="moviesGrid"></div>
+      </section>
 
     </main>
 
