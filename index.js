@@ -20,6 +20,9 @@ const noResults     = document.getElementById("noResults");
 const resultsBar    = document.getElementById("resultsBar");
 const resultsCount  = document.getElementById("resultsCount");
 const sortSelect    = document.getElementById("sortSelect");
+const themeToggle   = document.getElementById("themeToggle");
+const themeIcon     = document.getElementById("themeIcon");
+const themeLabel    = document.getElementById("themeLabel");
 
 const wlSidebar     = document.getElementById("wlSidebar");
 const wlNavBtn      = document.getElementById("wlNavBtn");
@@ -54,11 +57,48 @@ const randomAgainBtn= document.getElementById("randomAgainBtn");
 
 
 window.addEventListener("DOMContentLoaded", () => {
+  applyInitialTheme();
+  bindThemeToggle();
   loadWatchlist();
   renderWatchlist();
   clearBtn.classList.add("hidden");
   loadPopularMovies();
 });
+
+function applyInitialTheme() {
+  const savedTheme = localStorage.getItem("cinevault_theme");
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const initialTheme = savedTheme === "light" || savedTheme === "dark"
+    ? savedTheme
+    : (prefersDark ? "dark" : "light");
+
+  setTheme(initialTheme);
+}
+
+function bindThemeToggle() {
+  if (!themeToggle) return;
+  themeToggle.addEventListener("click", () => {
+    const current = document.body.dataset.theme === "light" ? "light" : "dark";
+    const next = current === "light" ? "dark" : "light";
+    setTheme(next);
+    localStorage.setItem("cinevault_theme", next);
+  });
+}
+
+function setTheme(theme) {
+  document.body.dataset.theme = theme;
+  if (!themeIcon || !themeLabel || !themeToggle) return;
+
+  if (theme === "light") {
+    themeIcon.textContent = "🌙";
+    themeLabel.textContent = "Dark";
+    themeToggle.setAttribute("aria-label", "Switch to dark mode");
+  } else {
+    themeIcon.textContent = "☀";
+    themeLabel.textContent = "Light";
+    themeToggle.setAttribute("aria-label", "Switch to light mode");
+  }
+}
 
 
 searchInput.addEventListener("input", () => {
