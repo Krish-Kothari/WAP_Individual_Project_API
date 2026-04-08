@@ -1,7 +1,8 @@
 const API_KEY  = "373c7a1f";
 const API_BASE = "https://www.omdbapi.com/";
 const POPULAR_IMDB_IDS = ["tt0111161", "tt0068646", "tt0468569", "tt0133093", "tt0109830", "tt1375666", "tt0816692", "tt0120737","tt0120697","tt0102926"];
-const OTHER_IMDB_IDS = ["tt0071562", "tt0050083", "tt0108052", "tt0167260", "tt0110912", "tt0120815", "tt0172495", "tt6751668", "tt0080684", "tt7286456"];
+const HOME_FEED_QUERY = "movie";
+const SCROLL_THRESHOLD_PX = 520;
 
 let watchlist     = [];
 let lastResults   = [];
@@ -10,6 +11,18 @@ let popularMovies = [];
 let otherMovies   = [];
 let popularLoading = false;
 let otherLoading = false;
+let homeFeedPage = 0;
+let homeFeedTotalResults = 0;
+let canLoadMoreHome = true;
+let isFetchingHome = false;
+const seenHomeIds = new Set();
+let currentSearchQuery = "";
+let totalSearchResults = 0;
+let searchPage = 0;
+let canLoadMoreSearch = false;
+let isFetchingSearch = false;
+let activeSearchToken = 0;
+let infiniteObserver = null;
 
 const searchInput   = document.getElementById("searchInput");
 const clearBtn      = document.getElementById("clearBtn");
@@ -26,6 +39,9 @@ const noResults     = document.getElementById("noResults");
 const resultsBar    = document.getElementById("resultsBar");
 const resultsCount  = document.getElementById("resultsCount");
 const sortSelect    = document.getElementById("sortSelect");
+const infiniteLoader= document.getElementById("infiniteLoader");
+const homeInfiniteLoader = document.getElementById("homeInfiniteLoader");
+const infiniteSentinel = document.getElementById("infiniteSentinel");
 const themeToggle   = document.getElementById("themeToggle");
 const themeIcon     = document.getElementById("themeIcon");
 const themeLabel    = document.getElementById("themeLabel");
@@ -65,6 +81,7 @@ const randomAgainBtn= document.getElementById("randomAgainBtn");
 window.addEventListener("DOMContentLoaded", () => {
   applyInitialTheme();
   bindThemeToggle();
+  bindInfiniteScroll();
   loadWatchlist();
   renderWatchlist();
   clearBtn.classList.add("hidden");
@@ -75,6 +92,7 @@ function loadHomeSections() {
   showHomeSections();
   loadPopularMovies();
   loadOtherMovies();
+  scheduleInfiniteCheck();
 }
 
 function showHomeSections() {
@@ -149,35 +167,155 @@ clearBtn.addEventListener("click", () => {
 
 
 async function searchMovies(query) {
+  const searchToken = ++activeSearchToken;
+  resetSearchPaginationState();
+  currentSearchQuery = query;
+
   hideHomeSections();
   show(searchSection);
   showLoader();
+  hide(infiniteLoader);
+  hide(homeInfiniteLoader);
   hideError();
   moviesGrid.innerHTML = "";
   hide(noResults);
   hide(resultsBar);
 
   try {
-    const res  = await fetch(`${API_BASE}?apikey=${API_KEY}&s=${encodeURIComponent(query)}&type=movie`);
-    if (!res.ok) throw new Error(`Network error (${res.status})`);
-
-    const data = await res.json();
+    const data = await fetchSearchPage(query, 1);
+    if (searchToken !== activeSearchToken) return;
     hideLoader();
 
-    if (data.Response === "True" && data.Search && data.Search.length > 0) {
-      lastResults = data.Search;
+    if (data.movies.length > 0) {
+      lastResults = data.movies;
+      searchPage = 1;
+      totalSearchResults = data.totalResults;
+      canLoadMoreSearch = lastResults.length < totalSearchResults;
       show(resultsBar);
-      updateResultsCount(data.Search.length, query);
-      renderCards(data.Search);
+      updateResultsCount(lastResults.length, totalSearchResults, query);
+      renderCards(lastResults);
     } else {
       lastResults = [];
+      canLoadMoreSearch = false;
       show(noResults);
     }
 
   } catch (err) {
+    if (searchToken !== activeSearchToken) return;
     hideLoader();
+    hide(infiniteLoader);
     showError("Couldn't connect. Check your API key or internet connection.");
     console.error(err);
+  }
+}
+
+async function fetchSearchPage(query, page) {
+  const res = await fetch(`${API_BASE}?apikey=${API_KEY}&s=${encodeURIComponent(query)}&type=movie&page=${page}`);
+  if (!res.ok) throw new Error(`Network error (${res.status})`);
+
+  const data = await res.json();
+  if (data.Response !== "True") {
+    return { movies: [], totalResults: 0 };
+  }
+
+  return {
+    movies: data.Search || [],
+    totalResults: Number.parseInt(data.totalResults || "0", 10) || 0
+  };
+}
+
+function bindInfiniteScroll() {
+  window.addEventListener("scroll", handleInfiniteScroll, { passive: true });
+  window.addEventListener("resize", handleInfiniteScroll, { passive: true });
+  bindInfiniteObserver();
+}
+
+function bindInfiniteObserver() {
+  if (!infiniteSentinel || typeof IntersectionObserver === "undefined") return;
+
+  infiniteObserver = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      if (!searchSection.classList.contains("hidden")) {
+        loadNextSearchPage();
+      } else {
+        loadNextHomePage();
+      }
+    }
+  }, {
+    root: null,
+    rootMargin: "0px 0px 560px 0px",
+    threshold: 0
+  });
+
+  infiniteObserver.observe(infiniteSentinel);
+}
+
+function scheduleInfiniteCheck() {
+  requestAnimationFrame(() => {
+    handleInfiniteScroll();
+  });
+}
+
+function handleInfiniteScroll() {
+  const viewportBottom = window.scrollY + window.innerHeight;
+  const fullHeight = document.documentElement.scrollHeight;
+  if (fullHeight - viewportBottom > SCROLL_THRESHOLD_PX) return;
+
+  if (!searchSection.classList.contains("hidden")) {
+    if (!canLoadMoreSearch || isFetchingSearch) return;
+    loadNextSearchPage();
+    return;
+  }
+
+  if (otherSection.classList.contains("hidden")) return;
+  if (!canLoadMoreHome || isFetchingHome) return;
+  loadNextHomePage();
+}
+
+async function loadNextSearchPage() {
+  if (!canLoadMoreSearch || isFetchingSearch) return;
+
+  const nextPage = searchPage + 1;
+  if (!currentSearchQuery || nextPage < 2) return;
+
+  const searchToken = activeSearchToken;
+  isFetchingSearch = true;
+  show(infiniteLoader);
+
+  try {
+    const data = await fetchSearchPage(currentSearchQuery, nextPage);
+    if (searchToken !== activeSearchToken) return;
+
+    if (data.movies.length === 0) {
+      canLoadMoreSearch = false;
+      return;
+    }
+
+    searchPage = nextPage;
+    const newMovies = data.movies.filter((movie) => !lastResults.some((m) => m.imdbID === movie.imdbID));
+    lastResults = [...lastResults, ...newMovies];
+    totalSearchResults = data.totalResults || totalSearchResults;
+    canLoadMoreSearch = lastResults.length < totalSearchResults;
+    updateResultsCount(lastResults.length, totalSearchResults, currentSearchQuery);
+
+    if (sortSelect.value === "default") {
+      renderCards(newMovies, moviesGrid, { append: true, startIndex: lastResults.length - newMovies.length });
+    } else {
+      const sorted = sortMovies(lastResults, sortSelect.value);
+      renderCards(sorted);
+    }
+
+    if (canLoadMoreSearch) scheduleInfiniteCheck();
+  } catch (err) {
+    if (searchToken === activeSearchToken) {
+      showError("Could not load more movies. Please scroll again to retry.");
+      console.error(err);
+    }
+  } finally {
+    if (searchToken === activeSearchToken) {
+      isFetchingSearch = false;
+      hide(infiniteLoader);
+    }
   }
 }
 
@@ -224,34 +362,71 @@ async function loadOtherMovies() {
     renderOtherMovies();
     return;
   }
-  if (otherLoading) return;
 
+  await loadNextHomePage();
+}
+
+async function fetchHomeFeedPage(page) {
+  const res = await fetch(`${API_BASE}?apikey=${API_KEY}&s=${encodeURIComponent(HOME_FEED_QUERY)}&type=movie&page=${page}`);
+  if (!res.ok) throw new Error(`Network error (${res.status})`);
+
+  const data = await res.json();
+  if (data.Response !== "True") {
+    return { movies: [], totalResults: 0 };
+  }
+
+  return {
+    movies: data.Search || [],
+    totalResults: Number.parseInt(data.totalResults || "0", 10) || 0
+  };
+}
+
+async function loadNextHomePage() {
+  if (isFetchingHome || !canLoadMoreHome) return;
+  if (!searchSection.classList.contains("hidden")) return;
+
+  isFetchingHome = true;
   otherLoading = true;
+  show(homeInfiniteLoader);
 
   try {
-    const requests = OTHER_IMDB_IDS.map(async (imdbID) => {
-      const res = await fetch(`${API_BASE}?apikey=${API_KEY}&i=${imdbID}`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data.Response !== "True") return null;
-      return {
-        imdbID: data.imdbID,
-        Title: data.Title,
-        Year: data.Year,
-        Poster: data.Poster
-      };
+    const nextPage = homeFeedPage + 1;
+    const data = await fetchHomeFeedPage(nextPage);
+
+    if (data.movies.length === 0) {
+      canLoadMoreHome = false;
+      return;
+    }
+
+    homeFeedPage = nextPage;
+    homeFeedTotalResults = data.totalResults;
+
+    const newMovies = data.movies.filter((movie) => {
+      if (seenHomeIds.has(movie.imdbID)) return false;
+      seenHomeIds.add(movie.imdbID);
+      return true;
     });
 
-    otherMovies = (await Promise.all(requests)).filter(Boolean);
+    if (newMovies.length > 0) {
+      const startIndex = otherMovies.length;
+      otherMovies = [...otherMovies, ...newMovies];
 
-    if (otherMovies.length > 0) {
-      renderOtherMovies();
+      if (otherGrid && otherGrid.children.length > 0) {
+        renderCards(newMovies, otherGrid, { append: true, startIndex });
+      } else {
+        renderOtherMovies();
+      }
     }
+
+    const maxPages = Math.ceil(homeFeedTotalResults / 10);
+    canLoadMoreHome = homeFeedPage < maxPages;
+    if (canLoadMoreHome) scheduleInfiniteCheck();
   } catch (err) {
-    otherMovies = [];
     console.error(err);
   } finally {
+    isFetchingHome = false;
     otherLoading = false;
+    hide(homeInfiniteLoader);
   }
 }
 
@@ -303,25 +478,31 @@ sortSelect.addEventListener("change", () => {
   if (lastResults.length === 0) return;
 
   const val  = sortSelect.value;
-  let sorted = [...lastResults];
-
-  if (val === "year-desc") {
-    sorted = sorted.sort((a, b) => parseInt(b.Year) - parseInt(a.Year));
-  } else if (val === "year-asc") {
-    sorted = sorted.sort((a, b) => parseInt(a.Year) - parseInt(b.Year));
-  } else if (val === "az") {
-    sorted = sorted.sort((a, b) => a.Title.localeCompare(b.Title));
-  } else if (val === "za") {
-    sorted = sorted.sort((a, b) => b.Title.localeCompare(a.Title));
-  }
-
+  const sorted = sortMovies(lastResults, val);
   renderCards(val === "default" ? lastResults : sorted);
 });
 
+function sortMovies(movies, sortValue) {
+  let sorted = [...movies];
 
-function renderCards(movies, targetGrid = moviesGrid) {
+  if (sortValue === "year-desc") {
+    sorted = sorted.sort((a, b) => parseInt(b.Year) - parseInt(a.Year));
+  } else if (sortValue === "year-asc") {
+    sorted = sorted.sort((a, b) => parseInt(a.Year) - parseInt(b.Year));
+  } else if (sortValue === "az") {
+    sorted = sorted.sort((a, b) => a.Title.localeCompare(b.Title));
+  } else if (sortValue === "za") {
+    sorted = sorted.sort((a, b) => b.Title.localeCompare(a.Title));
+  }
+
+  return sorted;
+}
+
+
+function renderCards(movies, targetGrid = moviesGrid, options = {}) {
+  const { append = false, startIndex = 0 } = options;
   if (!targetGrid) return;
-  targetGrid.innerHTML = "";
+  if (!append) targetGrid.innerHTML = "";
 
   movies.forEach((movie, i) => {
     const saved = isSaved(movie.imdbID);
@@ -329,7 +510,7 @@ function renderCards(movies, targetGrid = moviesGrid) {
     const card = document.createElement("div");
     card.className = "movie-card" + (saved ? " saved" : "");
     card.dataset.id = movie.imdbID;
-    card.style.animationDelay = `${i * 0.035}s`;
+    card.style.animationDelay = `${(startIndex + i) * 0.02}s`;
 
     const posterHTML = movie.Poster && movie.Poster !== "N/A"
       ? `<img class="card-poster" src="${movie.Poster}" alt="${safe(movie.Title)}" loading="lazy" />`
@@ -674,6 +855,8 @@ function showError(msg) {
 function hideError() { hide(errorBox); }
 
 function resetToLanding() {
+  ++activeSearchToken;
+  resetSearchPaginationState();
   moviesGrid.innerHTML = "";
   lastResults = [];
   hide(searchSection);
@@ -681,12 +864,22 @@ function resetToLanding() {
   hide(noResults);
   hide(errorBox);
   hide(loader);
+  hide(infiniteLoader);
+  hide(homeInfiniteLoader);
   loadHomeSections();
   sortSelect.value = "default";
 }
 
-function updateResultsCount(n, query) {
-  resultsCount.innerHTML = `<strong>${n}</strong> result${n !== 1 ? "s" : ""} for "<em>${safe(query)}</em>"`;
+function resetSearchPaginationState() {
+  totalSearchResults = 0;
+  searchPage = 0;
+  canLoadMoreSearch = false;
+  isFetchingSearch = false;
+}
+
+function updateResultsCount(loaded, total, query) {
+  const resultsWord = total !== 1 ? "results" : "result";
+  resultsCount.innerHTML = `<strong>${loaded}</strong> of <strong>${total}</strong> ${resultsWord} for "<em>${safe(query)}</em>"`;
 }
 
 function safe(str) {
