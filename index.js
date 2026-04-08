@@ -1,6 +1,6 @@
 const API_KEY  = "373c7a1f";
 const API_BASE = "https://www.omdbapi.com/";
-const POPULAR_IMDB_IDS = ["tt0111161", "tt0068646", "tt0468569", "tt0133093", "tt0109830", "tt1375666", "tt0816692", "tt0120737"];
+const POPULAR_IMDB_IDS = ["tt0111161", "tt0068646", "tt0468569", "tt0133093", "tt0109830", "tt1375666", "tt0816692", "tt0120737","tt0120697","tt0102926"];
 
 let watchlist     = [];
 let lastResults   = [];
