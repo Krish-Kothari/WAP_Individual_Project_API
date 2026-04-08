@@ -3,6 +3,7 @@ const API_BASE = "https://www.omdbapi.com/";
 const POPULAR_IMDB_IDS = ["tt0111161", "tt0068646", "tt0468569", "tt0133093", "tt0109830", "tt1375666", "tt0816692", "tt0120737","tt0120697","tt0102926"];
 const HOME_FEED_QUERY = "movie";
 const SCROLL_THRESHOLD_PX = 520;
+const SEARCH_DEBOUNCE_MS = 350;
 
 let watchlist     = [];
 let lastResults   = [];
@@ -23,6 +24,7 @@ let canLoadMoreSearch = false;
 let isFetchingSearch = false;
 let activeSearchToken = 0;
 let infiniteObserver = null;
+let searchDebounceTimer = null;
 
 const searchInput   = document.getElementById("searchInput");
 const clearBtn      = document.getElementById("clearBtn");
@@ -139,11 +141,13 @@ function setTheme(theme) {
     themeToggle.setAttribute("aria-label", "Switch to light mode");
   }
 }
-
-
 searchInput.addEventListener("input", () => {
   const q = searchInput.value.trim();
 
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
+  }
   if (q.length > 0) {
     clearBtn.classList.remove("hidden");
   } else {
@@ -155,7 +159,9 @@ searchInput.addEventListener("input", () => {
     return;
   }
 
-  searchMovies(q);
+  searchDebounceTimer = setTimeout(() => {
+    searchMovies(q);
+  }, SEARCH_DEBOUNCE_MS);
 });
 
 clearBtn.addEventListener("click", () => {
