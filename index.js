@@ -112,7 +112,7 @@ function applyInitialTheme() {
   const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   const initialTheme = savedTheme === "light" || savedTheme === "dark"
     ? savedTheme
-    : (prefersDark ? "dark" : "light");
+    : "dark";
 
   setTheme(initialTheme);
 }
